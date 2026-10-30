@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evergreen Server Application</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #1a0f14;
+      color: #fff0f5;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+      background-image: 
+        radial-gradient(ellipse at top, #2e1a24 0%, transparent 60%),
+        radial-gradient(ellipse at bottom, #1a0f14 0%, transparent 70%);
+    }
+
+    /* Sakura Petals */
+    .petal {
+      position: fixed;
+      top: -20px;
+      width: 12px;
+      height: 12px;
+      background: #ffb7c5;
+      border-radius: 150% 0 150% 0;
+      opacity: 0.75;
+      pointer-events: none;
+      z-index: 0;
+      animation: fall linear infinite;
+    }
+    .petal:nth-child(odd) { background: #ff8fab; border-radius: 0 150% 0 150%; }
+    .petal:nth-child(3n)  { background: #ffc2d1; width: 10px; height: 10px; }
+    .petal:nth-child(4n)  { background: #ff6b9d; width: 14px; height: 14px; }
+
+    @keyframes fall {
+      0%   { transform: translateY(0) rotate(0deg); opacity: 0.8; }
+      50%  { transform: translateY(50vh) rotate(180deg) translateX(40px); opacity: 0.9; }
+      100% { transform: translateY(105vh) rotate(360deg) translateX(-30px); opacity: 0.2; }
+    }
+
+    .hidden { display: none !important; }
+
+    .page {
+      min-height: 100vh;
+      padding: 40px 20px;
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .container, .login-box {
+      width: 100%;
+      max-width: 620px;
+      background: rgba(42, 22, 32, 0.92);
+      border: 1px solid #5c2e42;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(8px);
+      margin-top: 20px;
+    }
+
+    .login-box { max-width: 420px; text-align: center; }
+
+    .header { text-align: center; margin-bottom: 32px; }
+    .header h1 { 
+      font-size: 28px; 
+      font-weight: 700; 
+      color: #ff8fab; 
+      margin-bottom: 8px;
+      text-shadow: 0 0 20px rgba(255, 143, 171, 0.3);
+    }
+    .header p { color: #e8a0b5; font-size: 15px; }
+
+    .form-group { margin-bottom: 22px; text-align: left; }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #f0b8c8;
+      margin-bottom: 8px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    textarea {
+      width: 100%;
+      background: #1f1219;
+      border: 1px solid #5c2e42;
+      border-radius: 12px;
+      padding: 13px 16px;
+      color: #fff0f5;
+      font-size: 15px;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #ff8fab;
+      box-shadow: 0 0 0 3px rgba(255, 143, 171, 0.2);
+    }
+
+    textarea { min-height: 110px; resize: vertical; }
+
+    .roles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+    }
+
+    .role-option { position: relative; }
+    .role-option input { position: absolute; opacity: 0; cursor: pointer; }
+
+    .role-option label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: #1f1219;
+      border: 1px solid #5c2e42;
+      border-radius: 12px;
+      padding: 13px 10px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: #e8a0b5;
+      transition: all 0.2s;
+      margin: 0;
+    }
+
+    .role-option input:checked + label {
+      background: #3d1f2e;
+      border-color: #ff8fab;
+      color: #ffb7c5;
+      box-shadow: 0 0 0 1px #ff8fab;
+    }
+    .role-option label:hover { border-color: #c45c7a; }
+
+    .socials-grid { display: grid; gap: 12px; }
+    .social-input { display: flex; align-items: center; gap: 10px; }
+    .social-input span { font-size: 13px; color: #c47a94; min-width: 80px; }
+
+    .photo-upload {
+      border: 2px dashed #5c2e42;
+      border-radius: 14px;
+      padding: 22px;
+      text-align: center;
+      background: #1f1219;
+      transition: border-color 0.2s;
+      cursor: pointer;
+    }
+    .photo-upload:hover { border-color: #ff8fab; }
+    .photo-upload.has-image { border-style: solid; border-color: #ff8fab; }
+
+    .photo-preview {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 0 auto 12px;
+      display: none;
+      border: 3px solid #ff8fab;
+    }
+    .photo-upload input { display: none; }
+
+    .btn {
+      width: 100%;
+      background: linear-gradient(135deg, #ff6b9d, #e84a7f);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 15px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+      box-shadow: 0 4px 15px rgba(255, 107, 157, 0.3);
+      font-family: inherit;
+    }
+    .btn:hover {
+      background: linear-gradient(135deg, #ff8fab, #ff6b9d);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 107, 157, 0.4);
+    }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid #5c2e42;
+      color: #e8a0b5;
+      box-shadow: none;
+    }
+    .btn-secondary:hover {
+      border-color: #ff8fab;
+      color: #ff8fab;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .note { text-align: center; margin-top: 18px; font-size: 13px; color: #c47a94; }
+    .nav-link { text-align: center; margin-top: 16px; font-size: 14px; }
+    .nav-link button {
+      color: #ff8fab;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+    }
+    .nav-link button:hover { text-decoration: underline; }
+
+    .error-msg {
+      background: rgba(255, 80, 100, 0.15);
+      border: 1px solid #ff5064;
+      color: #ff8a9d;
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+      font-size: 14px;
+      display: none;
+    }
+    .success-msg {
+      background: rgba(100, 200, 140, 0.15);
+      border: 1px solid #64c88c;
+      color: #8dffb5;
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .user-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #5c2e42;
+      font-size: 14px;
+      color: #e8a0b5;
+    }
+    .user-bar strong { color: #ff8fab; }
+
+    /* Admin */
+    #adminDashboard { max-width: 1100px; width: 100%; }
+    .dash-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .dash-header h1 { color: #ff8fab; font-size: 26px; }
+
+    .stats { display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+    .stat-card {
+      background: rgba(42, 22, 32, 0.9);
+      border: 1px solid #5c2e42;
+      border-radius: 14px;
+      padding: 18px 24px;
+      flex: 1;
+      min-width: 140px;
+    }
+    .stat-card span { display: block; font-size: 13px; color: #e8a0b5; margin-bottom: 6px; }
+    .stat-card strong { font-size: 26px; color: #ff8fab; }
+
+    .app-card {
+      background: rgba(42, 22, 32, 0.92);
+      border: 1px solid #5c2e42;
+      border-radius: 16px;
+      padding: 22px;
+      display: grid;
+      grid-template-columns: 90px 1fr auto;
+      gap: 20px;
+      align-items: start;
+      margin-bottom: 16px;
+    }
+    .app-photo {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #ff8fab;
+    }
+    .app-info h3 { color: #ff8fab; margin-bottom: 4px; font-size: 17px; }
+    .app-info .gamertag { color: #f0b8c8; font-size: 13px; margin-bottom: 10px; }
+    .app-info .meta { font-size: 13px; color: #e8a0b5; line-height: 1.55; }
+    .app-info .about { margin-top: 10px; font-size: 14px; color: #ffd6e0; line-height: 1.5; }
+
+    .app-actions { display: flex; flex-direction: column; gap: 8px; }
+    .app-actions button {
+      padding: 8px 14px;
+      font-size: 13px;
+      background: #3d1f2e;
+      border: 1px solid #5c2e42;
+      color: #fff0f5;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .app-actions button:hover { background: #5c2e42; }
+    .app-actions .delete { background: #3a1a22; border-color: #6b2e3a; color: #ff8a9d; }
+    .app-actions .delete:hover { background: #4a2230; }
+
+    .empty {
+      text-align: center;
+      padding: 50px;
+      color: #c47a94;
+      background: rgba(42, 22, 32, 0.9);
+      border-radius: 16px;
+      border: 1px solid #5c2e42;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+    .status-pending { background: #3d2e1f; color: #ffc107; }
+    .status-approved { background: #1f3d2e; color: #8dffb5; }
+    .status-rejected { background: #3d1f1f; color: #ff8a9d; }
+
+    @media (max-width: 700px) {
+      .container, .login-box { padding: 28px 20px; }
+      .roles { grid-template-columns: 1fr 1fr; }
+      .app-card { grid-template-columns: 1fr; text-align: center; }
+      .app-photo { margin: 0 auto; }
+      .app-actions { flex-direction: row; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <div id="petals"></div>
+
+  <!-- ==================== LOGIN ==================== -->
+  <div id="loginPage" class="page">
+    <div class="login-box">
+      <div class="header">
+        <h1>🌸 Evergreen</h1>
+        <p>Login to apply for the server</p>
+      </div>
+
+      <div id="loginError" class="error-msg"></div>
+      <div id="loginSuccess" class="success-msg"></div>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Your password">
+      </div>
+
+      <button class="btn" onclick="login()">Login</button>
+      <button class="btn btn-secondary" onclick="showRegister()" style="margin-top: 10px;">Create Account</button>
+
+      <div class="nav-link" style="margin-top: 20px;">
+        <button onclick="showAdminLogin()">Admin Panel →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== REGISTER ==================== -->
+  <div id="registerPage" class="page hidden">
+    <div class="login-box">
+      <div class="header">
+        <h1>🌸 Create Account</h1>
+        <p>Create an account with your email</p>
+      </div>
+
+      <div id="registerError" class="error-msg"></div>
+      <div id="registerSuccess" class="success-msg"></div>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="registerEmail" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="registerPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input type="password" id="registerPassword2" placeholder="Repeat password">
+      </div>
+
+      <button class="btn" onclick="register()">Create Account</button>
+      <button class="btn btn-secondary" onclick="showLogin()" style="margin-top: 10px;">Already have an account? Login</button>
+    </div>
+  </div>
+
+  <!-- ==================== APPLICATION FORM ==================== -->
+  <div id="formPage" class="page hidden">
+    <div class="container">
+      <div class="user-bar">
+        <div>Logged in as <strong id="userEmailDisplay"></strong></div>
+        <button class="btn-secondary" style="width:auto;padding:6px 14px;font-size:13px;" onclick="logout()">Logout</button>
+      </div>
+
+      <div class="header">
+        <h1>🌸 Evergreen Application</h1>
+        <p>Fill out the form to apply for the server</p>
+      </div>
+
+      <div id="formError" class="error-msg"></div>
+      <div id="formSuccess" class="success-msg"></div>
+
+      <form id="applicationForm">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="fullName" placeholder="Your real name" required>
+        </div>
+
+        <div class="form-group">
+          <label>Minecraft Gamertag</label>
+          <input type="text" id="gamertag" placeholder="Your exact in-game username" required>
+        </div>
+
+        <div class="form-group">
+          <label>Face Photo (Required)</label>
+          <div class="photo-upload" id="photoUploadArea">
+            <img id="photoPreview" class="photo-preview" alt="Preview">
+            <div id="uploadText">
+              <p style="margin-bottom: 6px; color: #f0b8c8;">Click to upload a clear photo of your face</p>
+              <p style="font-size: 12px; color: #c47a94;">JPG, PNG or WEBP • Max 5MB</p>
+            </div>
+            <input type="file" id="facePhoto" accept="image/*" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Social Media Accounts <span style="color:#c47a94;font-weight:400;">(optional)</span></label>
+          <div class="socials-grid">
+            <div class="social-input">
+              <span>Discord</span>
+              <input type="text" id="discord" placeholder="username or @handle">
+            </div>
+            <div class="social-input">
+              <span>Instagram</span>
+              <input type="text" id="instagram" placeholder="@username">
+            </div>
+            <div class="social-input">
+              <span>Other</span>
+              <input type="text" id="otherSocial" placeholder="TikTok, YouTube, etc.">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Preferred Role</label>
+          <div class="roles">
+            <div class="role-option">
+              <input type="radio" id="miner" name="role" value="Miner" required>
+              <label for="miner">⛏️ Miner</label>
+            </div>
+            <div class="role-option">
+              <input type="radio" id="builder" name="role" value="Builder">
+              <label for="builder">🏗️ Builder</label>
+            </div>
+            <div class="role-option">
+              <input type="radio" id="pvper" name="role" value="PvPer">
+              <label for="pvper">⚔️ PvPer</label>
+            </div>
+            <div class="role-option">
+              <input type="radio" id="farmer" name="role" value="Farmer">
+              <label for="farmer">🌾 Farmer</label>
+            </div>
+            <div class="role-option">
+              <input type="radio" id="redstoner" name="role" value="Redstoner">
+              <label for="redstoner">🔴 Redstoner</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>About Me</label>
+          <textarea id="aboutMe" placeholder="Tell us about yourself, your Minecraft experience, why you want to join..." required></textarea>
+        </div>
+
+        <button type="submit" class="btn" id="submitBtn">Submit Application</button>
+      </form>
+
+      <p class="note">You can only submit one application per account.</p>
+    </div>
+  </div>
+
+  <!-- ==================== ADMIN LOGIN ==================== -->
+  <div id="adminLoginPage" class="page hidden">
+    <div class="login-box">
+      <div class="header">
+        <h1>🌸 Admin Panel</h1>
+        <p>Enter admin password</p>
+      </div>
+      <div id="adminLoginError" class="error-msg"></div>
+      <div class="form-group">
+        <label>Admin Password</label>
+        <input type="password" id="adminPassword" placeholder="Admin password">
+      </div>
+      <button class="btn" onclick="adminLogin()">Login as Admin</button>
+      <div class="nav-link" style="margin-top: 20px;">
+        <button onclick="showLogin()">← Back to Player Login</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== ADMIN DASHBOARD ==================== -->
+  <div id="adminDashboard" class="page hidden" style="display:none; flex-direction:column; align-items:center;">
+    <div style="width:100%; max-width:1100px;">
+      <div class="dash-header">
+        <h1>🌸 Applications Dashboard</h1>
+        <div style="display:flex; gap:10px;">
+          <button class="btn-secondary" style="width:auto;padding:8px 16px;" onclick="loadApplications()">Refresh</button>
+          <button class="btn-secondary" style="width:auto;padding:8px 16px;" onclick="logoutAdmin()">Logout</button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card">
+          <span>Total Applications</span>
+          <strong id="totalCount">0</strong>
+        </div>
+        <div class="stat-card">
+          <span>Pending</span>
+          <strong id="pendingCount">0</strong>
+        </div>
+        <div class="stat-card">
+          <span>Accounts</span>
+          <strong id="accountCount">0</strong>
+        </div>
+      </div>
+
+      <div id="applicationsList"></div>
+    </div>
+  </div>
+
+  <script>
+    // ====================== CONFIG ======================
+    const ADMIN_PASSWORD = "evergreen2024";   // Change this!
+
+    // ====================== PETALS ======================
+    (function createPetals() {
+      const container = document.getElementById('petals');
+      for (let i = 0; i < 26; i++) {
+        const petal = document.createElement('div');
+        petal.classList.add('petal');
+        petal.style.left = Math.random() * 100 + 'vw';
+        const size = 8 + Math.random() * 10;
+        petal.style.width = size + 'px';
+        petal.style.height = size + 'px';
+        petal.style.animationDuration = (8 + Math.random() * 12) + 's';
+        petal.style.animationDelay = (Math.random() * 14) + 's';
+        container.appendChild(petal);
+      }
+    })();
+
+    // ====================== STORAGE HELPERS ======================
+    function getUsers() {
+      return JSON.parse(localStorage.getItem('evergreen_users') || '[]');
+    }
+    function saveUsers(users) {
+      localStorage.setItem('evergreen_users', JSON.stringify(users));
+    }
+    function getApplications() {
+      return JSON.parse(localStorage.getItem('evergreen_applications') || '[]');
+    }
+    function saveApplications(apps) {
+      localStorage.setItem('evergreen_applications', JSON.stringify(apps));
+    }
+    function getCurrentUser() {
+      return JSON.parse(localStorage.getItem('evergreen_current_user') || 'null');
+    }
+    function setCurrentUser(user) {
+      localStorage.setItem('evergreen_current_user', JSON.stringify(user));
+    }
+
+    // ====================== PAGE NAVIGATION ======================
+    function hideAll() {
+      ['loginPage','registerPage','formPage','adminLoginPage','adminDashboard']
+        .forEach(id => {
+          const el = document.getElementById(id);
+          el.classList.add('hidden');
+          if (id === 'adminDashboard') el.style.display = 'none';
+        });
+    }
+
+    function showLogin() {
+      hideAll();
+      document.getElementById('loginPage').classList.remove('hidden');
+      clearMessages();
+    }
+
+    function showRegister() {
+      hideAll();
+      document.getElementById('registerPage').classList.remove('hidden');
+      clearMessages();
+    }
+
+    function showForm() {
+      hideAll();
+      document.getElementById('formPage').classList.remove('hidden');
+      const user = getCurrentUser();
+      if (user) document.getElementById('userEmailDisplay').textContent = user.email;
+    }
+
+    function showAdminLogin() {
+      hideAll();
+      document.getElementById('adminLoginPage').classList.remove('hidden');
+      clearMessages();
+    }
+
+    function showAdminDashboard() {
+      hideAll();
+      const el = document.getElementById('adminDashboard');
+      el.classList.remove('hidden');
+      el.style.display = 'flex';
+      loadApplications();
+    }
+
+    function clearMessages() {
+      document.querySelectorAll('.error-msg, .success-msg').forEach(el => {
+        el.style.display = 'none';
+        el.textContent = '';
+      });
+    }
+
+    function showError(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function showSuccess(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    // ====================== REGISTER ======================
+    function register() {
+      clearMessages();
+      const email = document.getElementById('registerEmail').value.trim().toLowerCase();
+      const pass  = document.getElementById('registerPassword').value;
+      const pass2 = document.getElementById('registerPassword2').value;
+
+      if (!email || !pass) return showError('registerError', 'Please fill in all fields.');
+      if (!email.includes('@')) return showError('registerError', 'Please enter a valid email.');
+      if (pass.length < 6) return showError('registerError', 'Password must be at least 6 characters.');
+      if (pass !== pass2) return showError('registerError', 'Passwords do not match.');
+
+      const users = getUsers();
+      if (users.find(u => u.email === email)) {
+        return showError('registerError', 'An account with this email already exists.');
+      }
+
+      users.push({
+        id: Date.now(),
+        email: email,
+        password: pass,           // Note: stored in plain text for demo only
+        createdAt: new Date().toISOString()
+      });
+      saveUsers(users);
+
+      showSuccess('registerSuccess', 'Account created successfully! You can now login.');
+      setTimeout(() => showLogin(), 1500);
+    }
+
+    // ====================== LOGIN ======================
+    function login() {
+      clearMessages();
+      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+      const pass  = document.getElementById('loginPassword').value;
+
+      if (!email || !pass) return showError('loginError', 'Please enter email and password.');
+
+      const users = getUsers();
+      const user = users.find(u => u.email === email && u.password === pass);
+
+      if (!user) {
+        return showError('loginError', 'Incorrect email or password.');
+      }
+
+      setCurrentUser({ id: user.id, email: user.email });
+      showForm();
+    }
+
+    // ====================== LOGOUT ======================
+    function logout() {
+      localStorage.removeItem('evergreen_current_user');
+      showLogin();
+    }
+
+    function logoutAdmin() {
+      showAdminLogin();
+    }
+
+    // ====================== PHOTO PREVIEW ======================
+    const photoInput = document.getElementById('facePhoto');
+    const photoPreview = document.getElementById('photoPreview');
+    const photoUploadArea = document.getElementById('photoUploadArea');
+    const uploadText = document.getElementById('uploadText');
+
+    photoUploadArea.addEventListener('click', () => photoInput.click());
+
+    photoInput.addEventListener('change', function() {
+      const file = this.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File too large. Max 5MB.');
+        this.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        photoPreview.src = e.target.result;
+        photoPreview.style.display = 'block';
+        uploadText.style.display = 'none';
+        photoUploadArea.classList.add('has-image');
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // ====================== SUBMIT APPLICATION ======================
+    document.getElementById('applicationForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      clearMessages();
+
+      const user = getCurrentUser();
+      if (!user) {
+        showError('formError', 'You must be logged in.');
+        return;
+      }
+
+      const file = photoInput.files[0];
+      if (!file) {
+        showError('formError', 'Please upload a face photo.');
+        return;
+      }
+
+      const role = document.querySelector('input[name="role"]:checked');
+      if (!role) {
+        showError('formError', 'Please select a preferred role.');
+        return;
+      }
+
+      // Check if already applied
+      const apps = getApplications();
+      if (apps.find(a => a.userId === user.id)) {
+        showError('formError', 'You have already submitted an application.');
+        return;
+      }
+
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const application = {
+          id: Date.now(),
+          userId: user.id,
+          email: user.email,
+          fullName: document.getElementById('fullName').value.trim(),
+          gamertag: document.getElementById('gamertag').value.trim(),
+          discord: document.getElementById('discord').value.trim(),
+          instagram: document.getElementById('instagram').value.trim(),
+          otherSocial: document.getElementById('otherSocial').value.trim(),
+          role: role.value,
+          aboutMe: document.getElementById('aboutMe').value.trim(),
+          photo: e.target.result,
+          status: 'pending',
+          submittedAt: new Date().toLocaleString()
+        };
+
+        apps.push(application);
+        saveApplications(apps);
+
+        showSuccess('formSuccess', 'Application submitted successfully! 🌸');
+        document.getElementById('applicationForm').reset();
+        photoPreview.style.display = 'none';
+        uploadText.style.display = 'block';
+        photoUploadArea.classList.remove('has-image');
+
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Application';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // ====================== ADMIN ======================
+    function adminLogin() {
+      clearMessages();
+      const pass = document.getElementById('adminPassword').value;
+      if (pass === ADMIN_PASSWORD) {
+        showAdminDashboard();
+      } else {
+        showError('adminLoginError', 'Incorrect admin password.');
+      }
+    }
+
+    function loadApplications() {
+      const apps = getApplications();
+      const users = getUsers();
+      const list = document.getElementById('applicationsList');
+
+      document.getElementById('totalCount').textContent = apps.length;
+      document.getElementById('pendingCount').textContent = apps.filter(a => a.status === 'pending').length;
+      document.getElementById('accountCount').textContent = users.length;
+
+      if (apps.length === 0) {
+        list.innerHTML = '<div class="empty">No applications yet. 🌸</div>';
+        return;
+      }
+
+      // Newest first
+      apps.sort((a, b) => b.id - a.id);
+
+      list.innerHTML = apps.map(app => {
+        const statusClass = app.status === 'approved' ? 'status-approved' :
+                            app.status === 'rejected' ? 'status-rejected' : 'status-pending';
+
+        return `
+          <div class="app-card">
+            <img src="${app.photo || ''}" class="app-photo" alt="Photo" onerror="this.style.display='none'">
+            <div class="app-info">
+              <h3>${app.fullName || '—'}
+                <span class="status-badge ${statusClass}">${app.status || 'pending'}</span>
+              </h3>
+              <div class="gamertag">Gamertag: <strong>${app.gamertag || '—'}</strong></div>
+              <div class="meta">
+                <div>Email: ${app.email || '—'}</div>
+                <div>Role: <strong>${app.role || '—'}</strong></div>
+                <div>Discord: ${app.discord || '—'}</div>
+                <div>Instagram: ${app.instagram || '—'}</div>
+                <div>Other: ${app.otherSocial || '—'}</div>
+                <div>Submitted: ${app.submittedAt || '—'}</div>
+              </div>
+              <div class="about">${app.aboutMe || ''}</div>
+            </div>
+            <div class="app-actions">
+              <button onclick="updateStatus(${app.id}, 'approved')">Approve</button>
+              <button onclick="updateStatus(${app.id}, 'rejected')">Reject</button>
+              <button class="delete" onclick="deleteApplication(${app.id})">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateStatus(id, status) {
+      const apps = getApplications();
+      const app = apps.find(a => a.id === id);
+      if (app) {
+        app.status = status;
+        saveApplications(apps);
+        loadApplications();
+      }
+    }
+
+    function deleteApplication(id) {
+      if (!confirm('Delete this application permanently?')) return;
+      let apps = getApplications();
+      apps = apps.filter(a => a.id !== id);
+      saveApplications(apps);
+      loadApplications();
+    }
+
+    // ====================== AUTO LOGIN CHECK ======================
+    window.addEventListener('DOMContentLoaded', () => {
+      const user = getCurrentUser();
+      if (user) {
+        showForm();
+      } else {
+        showLogin();
+      }
+    });
+  </script>
+</body>
+</html>
